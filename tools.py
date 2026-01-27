@@ -15,14 +15,11 @@ forbidden = [
 def getItemsInPath(path):
     return os.listdir(path)
 
-def createEmptyFile(file):
-    open(file, "w").close()
-
 def writeIntoFile(file, content):
     if file in forbidden:
         return "You are not allowed to modify these files."
     try:
-        with open(file, "w") as f:
+        with open(file, "w", "utf-8") as f:
             f.write(content)
         return "Wrote content into file successfully."
     except Exception as e:
@@ -51,7 +48,3 @@ def runPythonFile(file):
         return output
     except Exception:
         return "Error occured."
-
-def reason(thought):
-    return thought
-
