@@ -19,7 +19,7 @@ def writeIntoFile(file, content):
     if file in forbidden:
         return "You are not allowed to modify these files."
     try:
-        with open(file, "w", "utf-8") as f:
+        with open(file, "w", encoding="utf-8") as f:
             f.write(content)
         return "Wrote content into file successfully."
     except Exception as e:

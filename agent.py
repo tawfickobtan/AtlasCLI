@@ -17,9 +17,7 @@ functionRegistry = {
     "getItemsInPath": tools.getItemsInPath,
     "writeIntoFile": tools.writeIntoFile,
     "readFile": tools.readFile,
-    "runPythonFile": tools.runPythonFile,
-    "reason": tools.reason,
-    "createEmptyFile": tools.createEmptyFile
+    "runPythonFile": tools.runPythonFile
 }
 
 # Initialise messages with system prompt
@@ -57,7 +55,7 @@ while True:
                 print("Executing:")
                 print(name)
                 for arg in args:
-                    print(arg, args[arg])
+                    print(arg, (args[arg] if len(args[arg]) < 50 else args[arg][:50] + "..."))
                 print()
                 result = functionRegistry[name](**args)
                 print("result:")
