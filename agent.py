@@ -91,13 +91,11 @@ messages.append(response)
 console.print(agentPanel)
 console.print(Markdown(response.content))
 console.print(Markdown("---"))
-print()
 
 while True:
     console.print(UserPanel)
     userInput = input()
     console.print(Markdown("---"))
-    print()
     messages.append({
         "role": "user",
         "content": userInput
@@ -139,5 +137,4 @@ while True:
             console.print(Text("Response:", style="bold blue"))
             console.print(Markdown(response.content))
             console.print(Markdown("---"))
-            print() 
             break
