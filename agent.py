@@ -46,12 +46,9 @@ class Agent:
             result = "Error occured while executing the tool: " + str(e)
         return {"role": "tool", "tool_call_id": id, "content": result}
     
-    def prompt(self, user_input: str) -> str:
-        self.add_message("user", user_input)
+    def prompt(self, user_input: str) -> list:
+        self.add_message("user", user_input)    
         return self.complete()
     
     def reset_messages(self):
         self.messages = [{"role": "system", "content": self.system_prompt}]
-
-    
-    

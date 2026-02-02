@@ -1,4 +1,3 @@
-from llm import complete
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
@@ -61,13 +60,13 @@ big_text = Text(""" █████╗ ██╗     ███████╗█
 ██╔══██║██║     ██╔══╝  ██╔══██╗██╔══╝  ██║  ██║
 ██║  ██║███████╗██║     ██║  ██║███████╗██████╔╝
 ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═╝╚══════╝╚═════╝ 
-""", style="bold cyan")
-welcome_text = Text("Your File Management AI Agent", style="bold cyan")
+""", style="bold white")
+welcome_text = Text("Your File Management AI Agent", style="bold white")
 version_text = Text(f"(Version: {config.get('version', '1.1')})", style="dim white")
 welcome_panel = Panel(
     big_text + welcome_text + "\n" + version_text,
     title="🚀 Agent Started",
-    border_style="green",
+    border_style="dim white",
     padding=(0, 10)
 )
 
@@ -91,14 +90,14 @@ agent = Agent(
 
 
 agentPanel = Panel("🤖 Alfred:",
-                     border_style="green",
+                     border_style="yellow",
                      expand=False,
-                     style="bold blue")
+                     style="bold white")
 
 UserPanel = Panel("💭 User:",
-                     border_style="green",
+                     border_style="yellow",
                      expand=False,
-                     style="bold blue")
+                     style="bold white")
 
 toolPanel = Text("🛠️ Executing: ",
                      style="bold red")
@@ -109,7 +108,7 @@ console.print(Markdown(response[0].content))
 console.print(Markdown("---"))
 
 while True:
-    console.print(UserPanel)
+    print("</> ", end="")
     userInput = input()
     console.print(Markdown("---"))
     agent.add_message("user", userInput)
@@ -137,7 +136,7 @@ while True:
             panelText += Text("Result⤵️\n", style="bold blue") + Text(result, style="white")
             toolPanel = Panel(
                 panelText,
-                border_style="red",
+                border_style="dim white",
                 title="🛠️ Executing Tool: ",
                 expand=False,
             )
