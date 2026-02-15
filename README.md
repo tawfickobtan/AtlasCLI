@@ -1,12 +1,12 @@
-# Newton 🍎
+# Atlas 🍎
 
 **Local AI Agent for File Management**
 
-Newton is your personal AI assistant that runs on your computer. It manages your files, automates tasks, and remembers what you tell it across all your sessions. Features a beautiful terminal UI built with Rich.
+Atlas is your personal AI assistant that runs on your computer. It manages your files, automates tasks, and remembers what you tell it across all your sessions. Features a beautiful terminal UI built with Rich.
 
 ---
 
-## What Newton Does
+## What Atlas Does
 
 **Comprehensive File Management**
 - Create, read, write, delete, and move files through conversation
@@ -45,8 +45,8 @@ Newton is your personal AI assistant that runs on your computer. It manages your
 
 **2. Installation**
 ```bash
-git clone https://github.com/tawfickobtan/Newton
-cd Newton
+git clone https://github.com/tawfickobtan/Atlas
+cd Atlas
 pip install -r requirements.txt
 ```
 
@@ -65,14 +65,14 @@ setx GROQ_API_KEY "your-groq-api-key"
 
 Edit `configuration/config.json` to change the model or settings.
 
-**4. Run Newton**
+**4. Run Atlas**
 ```bash
-python newton.py
+python atlas.py
 ```
 
 ---
 
-## Why Newton?
+## Why Atlas?
 
 ✅ **Persistent Memory** - Remembers facts across sessions  
 ✅ **Local & Private** - All data stays on your machine  
@@ -107,8 +107,8 @@ python newton.py
 ## Project Structure
 
 ```
-Newton/
-├── newton.py             # Main entry point with Rich UI
+Atlas/
+├── atlas.py             # Main entry point with Rich UI
 ├── requirements.txt      # Python dependencies
 ├── README.md            # Documentation
 ├── agent/
@@ -142,7 +142,7 @@ Newton/
 - `numpy` - Numerical operations
 
 **Protected Files:**  
-Newton won't modify these critical files: `agent.py`, `tools.py`, `tools.json`, `config.json`, `AGENT.md`, `requirements.txt`, `.gitignore`
+Atlas won't modify these critical files: `agent.py`, `tools.py`, `tools.json`, `config.json`, `AGENT.md`, `requirements.txt`, `.gitignore`
 
 ---
 
@@ -157,7 +157,7 @@ Edit `configuration/config.json`:
 }
 ```
 
-Customize the agent personality in `configuration/AGENT.md` to change how Newton responds and behaves.
+Customize the agent personality in `configuration/AGENT.md` to change how Atlas responds and behaves.
 
 ---
 
