@@ -38,8 +38,8 @@ console = Console(theme=custom_theme)
 # Define function registry
 functionRegistry = {
     "getItemsInPath": tools.getItemsInPath,
-    "writeIntoFile": tools.writeIntoFile,
     "readFile": tools.readFile,
+    "readPdfPages": tools.readPdfPages,
     "readFileLines": tools.readFileLines,
     "createFile": tools.createFile,
     "delete": tools.delete,
@@ -57,7 +57,9 @@ functionRegistry = {
     "recallFact": tools.recallFact,
     "forgetFact": tools.forgetFact,
     "listMemories": tools.listMemories,
-    "getDirectoryTree": tools.getDirectoryTree
+    "getDirectoryTree": tools.getDirectoryTree,
+    "searchWeb": tools.searchWeb,
+    "extractTextFromUrl": tools.extractTextFromUrl
 }
 
 # Create welcome message

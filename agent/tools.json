@@ -36,27 +36,6 @@
   {
     "type": "function",
     "function": {
-      "name": "writeIntoFile",
-      "description": "Writes content into a file unless it is forbidden and will create file if file doesn't exist",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "file": {
-            "type": "string",
-            "description": "Target file path."
-          },
-          "content": {
-            "type": "string",
-            "description": "Content to write into the file."
-          }
-        },
-        "required": ["file", "content"]
-      }
-    }
-  },
-  {
-    "type": "function",
-    "function": {
       "name": "readFile",
       "description": "Reads and returns the full contents of a file.",
       "parameters": {
@@ -71,6 +50,32 @@
       }
     }
   },
+  {
+    "type": "function",
+    "function": {
+      "name": "readPdfPages",
+      "description": "Reads and returns the text content of specific pages from a PDF file. Page numbers are 1-indexed (page 1 is the first page). Use this for PDFs instead of other read functions. Try to read as few pages at a time to avoid overwhelming the LLM.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "PDF file path to read."
+          },
+          "start_page": {
+            "type": "integer",
+            "description": "The page number to start reading from (1-indexed, inclusive)."
+          },
+          "end_page": {
+            "type": "integer",
+            "description": "The page number to stop reading at (1-indexed, inclusive)."
+          }
+        },
+        "required": ["file", "start_page", "end_page"]
+  }
+    }
+  }
+  ,
   {
     "type": "function",
     "function": {
@@ -383,5 +388,45 @@
         "required": ["sources", "destination"]
       }
     }
+  },
+   {
+    "type": "function",
+    "function": {
+      "name": "searchWeb",
+      "description": "Searches the web using DuckDuckGo and returns the top k results with titles and links. Use this to find information online.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search query to look up on the web."
+          },
+          "k": {
+            "type": "integer",
+            "description": "Number of results to return (default is 3).",
+            "default": 3
+          }
+        },
+        "required": ["query"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "extractTextFromUrl",
+      "description": "Extracts the main text content from a webpage URL using a headless browser. Use this after searchWeb to read the actual content of a page.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL of the webpage to extract text from."
+          }
+        },
+        "required": ["url"]
+      }
+    }
   }
+
 ]
