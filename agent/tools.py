@@ -41,7 +41,13 @@ except Exception as e:
 def getItemsInPath(path: str) -> str:
     try:
         items = os.listdir(path)
-        return "\n".join(items)
+        n = len(items)
+        if n <= 10:
+            return f"Found {n} items in path: {path}\n" + "\n".join(items)
+        directory_content = str(Path(baseDir / "../memory/directory_content.txt").resolve())
+        with open(directory_content, "w", encoding="utf-8") as f:
+            f.write("\n".join(items))
+        return f"Found more than 10 items ({n}) in path: {path}\nPlaced directory items in " + directory_content + " for review. Use readFileLines to read the content without overwhelming the LLM context."
     except Exception as e:
         return "Error occured. " + str(e)
 
@@ -101,14 +107,26 @@ def readFileLines(file: str, start_line: int, end_line: int) -> str:
     except Exception as e:
         return "Error occured: " + str(e)
 
-def delete(file: str) -> str:  
-    if file in forbidden:
-        return "You are not allowed to delete these files."
-    try:
-        os.remove(file)
-        return "File deleted successfully."
-    except Exception as e:
-        return "Error occured: " + str(e)
+def deleteFiles(files: list) -> str:  
+    success = []
+    failed = []
+    for file in files:
+
+        if file in forbidden:
+            failed.append(file)
+            continue
+        try:
+            os.remove(file)
+            success.append(file)
+        except Exception as e:
+            failed.append(file)
+    success_msg = ""
+    failed_msg = ""
+    if success:
+        success_msg = "Successfully deleted:\n" + "\n".join(success)
+    if failed:
+        failed_msg = "Failed to delete:\n" + "\n".join(failed) + "."
+    return success_msg + "\n\n" + failed_msg
 
 def createDirectory(directory: str) -> str:
     try:
@@ -126,7 +144,7 @@ def deleteDirectory(directory: str) -> str:
     except Exception as e:
         return "Error occured: " + str(e)
     
-def moveMultipleFiles(sources: list, destination: str) -> str:
+def moveFiles(sources: list, destination: str) -> str:
     if destination in forbidden:
         return "You are not allowed to move files to this destination."
     success = []
@@ -143,7 +161,7 @@ def moveMultipleFiles(sources: list, destination: str) -> str:
 
     return "Successfully moved:" + "\n" +  '\n'.join(success) + "\n\n" + "Failed to move:" + "\n" + '\n'.join(failed) + "."
     
-def copyMultipleFiles(sources: list, destination: str) -> str:
+def copyFiles(sources: list, destination: str) -> str:
     if destination in forbidden:
         return "You are not allowed to copy files to this destination."
     success = []

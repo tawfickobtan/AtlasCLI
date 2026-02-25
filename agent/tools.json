@@ -104,17 +104,20 @@
   {
     "type": "function",
     "function": {
-      "name": "delete",
-      "description": "Deletes a file at the specified path.",
+      "name": "deleteFiles",
+      "description": "Deletes files at the specified paths. Can be used for a single file by providing a list with one item. Use this to delete files and folders from the filesystem.",
       "parameters": {
         "type": "object",
         "properties": {
-          "file": {
-            "type": "string",
-            "description": "File path to delete."
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "File paths to delete."
           }
         },
-        "required": ["file"]
+        "required": ["files"]
       }
     }
   },
@@ -281,8 +284,8 @@
   {
     "type": "function",
     "function": {
-      "name": "moveMultipleFiles",
-      "description": "Moves multiple files from source paths to a destination directory. Can also be used for a single file by providing a list with one item. Use this to move files and folders around the filesystem.",
+      "name": "moveFiles",
+      "description": "Moves files from source paths to a destination directory. Can also be used for a single file by providing a list with one item. Use this to move files and folders around the filesystem.",
       "parameters": {
         "type": "object",
         "properties": {
@@ -305,8 +308,8 @@
   {
     "type": "function",
     "function": {
-      "name": "copyMultipleFiles",
-      "description": "Copies multiple files from source paths to a destination directory. Can also be used for a single file by providing a list with one item. Use this to copy files and folders around the filesystem.",
+      "name": "copyFiles",
+      "description": "Copies files from source paths to a destination directory. Can also be used for a single file by providing a list with one item. Use this to copy files and folders around the filesystem.",
       "parameters": {
         "type": "object",
         "properties": {

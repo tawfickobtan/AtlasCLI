@@ -1,3 +1,4 @@
+from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
@@ -42,11 +43,11 @@ functionRegistry = {
     "readPdfPages": tools.readPdfPages,
     "readFileLines": tools.readFileLines,
     "createFile": tools.createFile,
-    "delete": tools.delete,
+    "deleteFiles": tools.deleteFiles,
     "createDirectory": tools.createDirectory,
     "deleteDirectory": tools.deleteDirectory,
-    "moveMultipleFiles": tools.moveMultipleFiles,
-    "copyMultipleFiles": tools.copyMultipleFiles,
+    "moveMultipleFiles": tools.moveFiles,
+    "copyMultipleFiles": tools.copyFiles,
     "getCurrentDirectory": tools.getCurrentDirectory,
     "fileExists": tools.fileExists,
     "getFileSize": tools.getFileSize,
@@ -124,7 +125,6 @@ while True:
             except Exception as e:
                 raise e
         if len(response) > 1:
-            first = False
             tool_call = response[0].tool_calls[0]
             id = tool_call.id
             name = tool_call.function.name
@@ -147,9 +147,10 @@ while True:
                 expand=False,
             )
             if not first:
-                console.print(Text("||", justify="center", style="white"))
-                console.print(Text("||", justify="center", style="white"))
-            console.print(toolPanel)
+                console.print(Align("||", align="center"))
+                console.print(Align("||", align="center"))
+            console.print(Align(toolPanel, align="center"))
+            first = False
         else:
             print()
             textResponse = response[0].content
