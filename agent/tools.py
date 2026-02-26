@@ -1,7 +1,5 @@
 import json
 import os
-import subprocess
-import time
 from pathlib import Path
 from bs4 import BeautifulSoup
 
@@ -47,7 +45,7 @@ def getItemsInPath(path: str) -> str:
         directory_content = str(Path(baseDir / "../memory/directory_content.txt").resolve())
         with open(directory_content, "w", encoding="utf-8") as f:
             f.write("\n".join(items))
-        return f"Found more than 10 items ({n}) in path: {path}\nPlaced directory items in " + directory_content + " for review. Use readFileLines to read the content without overwhelming the LLM context."
+        return f"Found more than 10 items ({n}) in path: {path}\nPlaced directory items in " + directory_content + " for review. Use readFileLines to read the content without overwhelming the LLM context." + "\n\nFirst 10 items:\n" + "\n".join(items[:10])
     except Exception as e:
         return "Error occured. " + str(e)
 
@@ -147,6 +145,7 @@ def deleteDirectory(directory: str) -> str:
 def moveFiles(sources: list, destination: str) -> str:
     if destination in forbidden:
         return "You are not allowed to move files to this destination."
+    destination = normalizePath(destination)
     success = []
     failed = []
     for source in sources:
@@ -158,8 +157,14 @@ def moveFiles(sources: list, destination: str) -> str:
             success.append(source)
         except Exception as e:
             failed.append(source)
-
-    return "Successfully moved:" + "\n" +  '\n'.join(success) + "\n\n" + "Failed to move:" + "\n" + '\n'.join(failed) + "."
+            
+    success_msg = ""
+    failed_msg = ""
+    if success:
+        success_msg = "Successfully moved:\n" + "\n".join(success)
+    if failed:
+        failed_msg = "Failed to move:\n" + "\n".join(failed)
+    return success_msg + "\n\n" + failed_msg
     
 def copyFiles(sources: list, destination: str) -> str:
     if destination in forbidden:
@@ -177,7 +182,13 @@ def copyFiles(sources: list, destination: str) -> str:
         except Exception as e:
             failed.append(source)
 
-    return "Successfully copied:" + "\n" +  '\n'.join(success) + "\n\n" + "Failed to copy:" + "\n" + '\n'.join(failed) + "."
+    success_msg = ""
+    failed_msg = ""
+    if success:
+        success_msg = "Successfully copied:\n" + "\n".join(success)
+    if failed:
+        failed_msg = "Failed to copy:\n" + "\n".join(failed)
+    return success_msg + "\n\n" + failed_msg
     
 def getCurrentDirectory() -> str:
     try:
@@ -328,10 +339,6 @@ def extractTextFromUrl(url: str) -> str:
         # Clean up excessive whitespace/newlines
         text = re.sub(r'\n{3,}', '\n\n', text)
         text = re.sub(r' {2,}', ' ', text)
-        
-        # Limit length to prevent overwhelming the LLM
-        if len(text) > 2000:
-            text = text[:2000] + "\n\n[Content truncated...]"
         
         if text:
             extracted_content = Path(baseDir / "../memory/extracted_content.txt").resolve()
