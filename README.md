@@ -127,8 +127,7 @@ Want to change Atlas's personality or behavior? Edit `configuration/AGENT.md` â€
 | `readFileLines` | Read specific line ranges from a file |
 | `writeIntoFile` | Write or append content to a file |
 | `delete` | Delete a file |
-| `moveFile` / `copyFile` | Move or copy a single file |
-| `moveMultipleFiles` / `copyMultipleFiles` | Batch move or copy operations |
+| `moveFiles` / `copyFiles` | Move or copy a single file |
 | `renameFile` | Rename a file |
 | `fileExists` | Check if a file exists |
 | `getFileSize` | Get the size of a file |
