@@ -1,159 +1,296 @@
-from rich.align import Align
-from rich.console import Console
-from rich.panel import Panel
-from rich.text import Text
-from rich.markdown import Markdown
-from rich.theme import Theme
-from agent.agent import Agent
-import agent.tools as tools
+import asyncio
 import json
 import os
+from datetime import datetime
 from pathlib import Path
-from rich.console import Console
+
+from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.text import Text
+from textual.app import App, ComposeResult
+from textual.binding import Binding
+from textual.containers import Vertical
+from textual.widgets import Footer, Header, Input, OptionList, RichLog
+
+from agent.agent import Agent
+import agent.tools as tools
+
+# ── Bootstrap ──────────────────────────────────────────────────────────────────
 
 baseDir = Path(__file__).resolve().parent
 
-# Load config file
-config = {}
-with open(baseDir / "configuration/config.json", "r") as f:
-    config = json.load(f)
+config: dict = json.loads((baseDir / "configuration/config.json").read_text())
+systemPrompt: str = (baseDir / "configuration/AGENT.md").read_text()
+tooling: list = json.loads((baseDir / "agent/tools.json").read_text())
 
-systemPrompt = ""
-with open(baseDir / "configuration/AGENT.md", "r") as f:
-    systemPrompt = f.read()
+api_key = os.environ.get("GROQ_API_KEY", "")
+model = config.get("model", "moonshotai/Kimi-K2-Instruct-0905")
 
-tooling = []
-with open(baseDir / "agent/tools.json") as f:
-    tooling = json.load(f)
-
-api_key = os.environ.get("GROQ_API_KEY","")
-
-custom_theme = Theme({
-    "markdown.h1": "Bold yellow",
-    "markdown.h2": "bold white",
-    "markdown.h3": "white",
-})
-
-console = Console(theme=custom_theme)
-
-# Define function registry
-functionRegistry = {
-    "getItemsInPath": tools.getItemsInPath,
-    "readFile": tools.readFile,
-    "readPdfPages": tools.readPdfPages,
-    "readFileLines": tools.readFileLines,
-    "createFile": tools.createFile,
-    "deleteFiles": tools.deleteFiles,
-    "createDirectory": tools.createDirectory,
-    "deleteDirectory": tools.deleteDirectory,
-    "moveFiles": tools.moveFiles,
-    "copyFiles": tools.copyFiles,
-    "getCurrentDirectory": tools.getCurrentDirectory,
-    "fileExists": tools.fileExists,
-    "getFileSize": tools.getFileSize,
-    "renameFile": tools.renameFile,
-    "rememberFact": tools.rememberFact,
-    "recallFact": tools.recallFact,
-    "forgetFact": tools.forgetFact,
-    "listMemories": tools.listMemories,
-    "searchWeb": tools.searchWeb,
-    "extractTextFromUrl": tools.extractTextFromUrl
+FUNCTION_REGISTRY = {
+    "getItemsInPath":     tools.getItemsInPath,
+    "readFile":           tools.readFile,
+    "readPdfPages":       tools.readPdfPages,
+    "readFileLines":      tools.readFileLines,
+    "createFile":         tools.createFile,
+    "deleteFiles":        tools.deleteFiles,
+    "createDirectory":    tools.createDirectory,
+    "deleteDirectory":    tools.deleteDirectory,
+    "moveFiles":          tools.moveFiles,
+    "copyFiles":          tools.copyFiles,
+    "getCurrentDirectory":tools.getCurrentDirectory,
+    "fileExists":         tools.fileExists,
+    "getFileSize":        tools.getFileSize,
+    "renameFile":         tools.renameFile,
+    "rememberFact":       tools.rememberFact,
+    "recallFact":         tools.recallFact,
+    "forgetFact":         tools.forgetFact,
+    "listMemories":       tools.listMemories,
+    "searchWeb":          tools.searchWeb,
+    "extractTextFromUrl": tools.extractTextFromUrl,
 }
 
-# Create welcome message
-big_text = Text(""" █████╗ ████████╗██╗      █████╗ ███████╗ ██████╗██╗     ██╗
-██╔══██╗╚══██╔══╝██║     ██╔══██╗██╔════╝██╔════╝██║     ██║
-███████║   ██║   ██║     ███████║███████╗██║     ██║     ██║
-██╔══██║   ██║   ██║     ██╔══██║╚════██║██║     ██║     ██║
-██║  ██║   ██║   ███████╗██║  ██║███████║╚██████╗███████╗██║
-╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝╚══════╝ ╚═════╝╚══════╝╚═╝
-
-
-""", style="bold white")
-welcome_text = Text("Your Local AI Agent", style="bold white")
-version_text = Text(f"(Version: {config.get('version', '1.1')})", style="dim white")
-welcome_panel = Panel(
-    big_text + welcome_text + "\n" + version_text,
-    title="🚀 Agent Started",
-    border_style="dim white",
-    expand=False,
-    padding=(0, 10)
-)
-
-
-# Initialise Agent
-model = config.get("model", "moonshotai/Kimi-K2-Instruct-0905")
 agent = Agent(
     base_url=config.get("base_url", "https://api.groq.com/openai/v1"),
     api_key=api_key,
     model=model,
     toolsDesc=tooling,
-    function_registry=functionRegistry,
-    system_prompt=systemPrompt + "\n" +
-    f"Current Directory: {tools.getCurrentDirectory()}\n" +
-    f"Current Directory Contents: {tools.getItemsInPath(tools.getCurrentDirectory())}\n" +
-    f"Stored Memories: {tools.listMemories()}\n" +
-    f"Model Powering you: {model}"
-                )
+    function_registry=FUNCTION_REGISTRY,
+    system_prompt=(
+        systemPrompt
+        + f"\nCurrent Directory: {tools.getCurrentDirectory()}"
+        + f"\nCurrent Directory Contents: {tools.getItemsInPath(tools.getCurrentDirectory())}"
+        + f"\nStored Memories: {tools.listMemories()}"
+        + f"\nModel Powering you: {model}"
+    ),
+)
 
-console.print(welcome_panel)
-console.print(Text("Model: ", style="bold yellow") + Text(agent.model, style="white"))
-console.print(Text("Current Directory: ", style="bold yellow") + Text(tools.getCurrentDirectory(), style="white"))
+# ── Help text ──────────────────────────────────────────────────────────────────
 
-console.print()  # Blank line for spacing
+HELP_TEXT = """\
+[bold yellow]Slash Commands[/]
+  [bold white]/clear[/]   Reset conversation history
+  [bold white]/memory[/]  Show all stored memories
+  [bold white]/save[/]    Save conversation to a Markdown file
+  [bold white]/exit[/]    Quit AtlasCLI
+  [bold white]/help[/]    Show this message
+  [bold white]/quit[/]    leave the app
 
+[bold yellow]Key Bindings[/]
+  [bold white]Ctrl+L[/]   Clear chat
+  [bold white]Ctrl+S[/]   Save chat
+  [bold white]Ctrl+M[/]   Show memory
+  [bold white]Ctrl+Q[/]   Quit\
+"""
 
-with console.status("Loading...", spinner="dots"):
-    try:
-        response = agent.step()
-    except Exception as e:
-        raise e
-textResponse = response[0].content
-console.print(Markdown(textResponse))
-console.print(Markdown("---"))
+# ── Styles ─────────────────────────────────────────────────────────────────────
 
-while True:
-    print("</> ", end="")
-    userInput = input()
-    console.print(Markdown("---"))
-    agent.add_message("user", userInput)
-    first = True
-    while True:
-        with console.status("Thinking...", spinner="dots"):
-            try:
-                response = agent.step()
-            except Exception as e:
-                raise e
+SLASH_COMMANDS = ["/clear", "/memory", "/save", "/exit", "/help", "/quit"]
+
+APP_CSS = """
+#chat {
+    padding: 1 2;
+    border: none;
+}
+
+#input-area {
+    dock: bottom;
+    height: auto;
+}
+
+#suggestions {
+    height: auto;
+    max-height: 7;
+    margin: 0 2 0 2;
+    border: round $accent;
+    display: none;
+}
+
+Input {
+    border: round $accent;
+    margin: 0 2 1 2;
+    padding: 0 1;
+}
+"""
+
+# ── App ────────────────────────────────────────────────────────────────────────
+
+class AtlasTUI(App):
+    """AtlasCLI — A Textual TUI for the Atlas AI agent."""
+
+    TITLE = "AtlasCLI"
+    SUB_TITLE = f"v{config.get('version', '1.0')}  ·  {model}"
+    CSS = APP_CSS
+
+    BINDINGS = [
+        Binding("ctrl+q", "quit",        "Quit",   show=True),
+        Binding("ctrl+l", "clear_chat",  "Clear",  show=True),
+        Binding("ctrl+s", "save_chat",   "Save",   show=True),
+        Binding("ctrl+m", "show_memory", "Memory", show=True),
+    ]
+
+    # ── Layout ─────────────────────────────────────────────────────────────────
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        yield RichLog(id="chat", highlight=True, markup=True, wrap=True)
+        with Vertical(id="input-area"):
+            yield OptionList(*SLASH_COMMANDS, id="suggestions")
+            yield Input(placeholder="Message Atlas...  (type / for commands)")
+        yield Footer()
+
+    # ── Lifecycle ──────────────────────────────────────────────────────────────
+
+    def on_mount(self) -> None:
+        self.query_one(Input).focus()
+        self.run_worker(self._boot_atlas(), exclusive=True, name="boot")
+
+    async def _boot_atlas(self) -> None:
+        """Get Atlas's opening message on startup."""
+        self.sub_title = "Starting up..."
+        chat = self.query_one(RichLog)
+        chat.write(Text("─" * 60, style="dim white"))
+        response = await asyncio.to_thread(agent.step)
+        self._render_response(response)
+        self._reset_subtitle()
+
+    # ── Input handling ─────────────────────────────────────────────────────────
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        suggestions = self.query_one("#suggestions", OptionList)
+        value = event.value
+        if value.startswith("/"):
+            matches = [cmd for cmd in SLASH_COMMANDS if cmd.startswith(value.lower())]
+            suggestions.clear_options()
+            for match in matches:
+                suggestions.add_option(match)
+            suggestions.display = len(matches) > 0
+        else:
+            suggestions.display = False
+
+    def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
+        inp = self.query_one(Input)
+        inp.value = str(event.option.prompt)
+        self.query_one("#suggestions", OptionList).display = False
+        inp.focus()
+        inp.action_end()  # move cursor to end
+
+    async def on_input_submitted(self, event: Input.Submitted) -> None:
+        self.query_one("#suggestions", OptionList).display = False
+        user_input = event.value.strip()
+        if not user_input:
+            return
+        self.query_one(Input).clear()
+
+        if user_input.startswith("/"):
+            self._handle_slash(user_input.lower())
+        else:
+            self._write_bubble("You", user_input, label_style="bold cyan")
+            agent.add_message("user", user_input)
+            self.run_worker(self._run_agent(), exclusive=True, name="agent")
+
+    def _handle_slash(self, cmd: str) -> None:
+        chat = self.query_one(RichLog)
+
+        if cmd == "/clear":
+            agent.reset_messages()
+            chat.clear()
+            chat.write(Text("Conversation cleared.", style="dim green"))
+
+        elif cmd == "/memory":
+            memories = tools.listMemories()
+            chat.write(Text("📦  Stored Memories", style="bold yellow"))
+            chat.write(Text(memories if memories else "No memories stored yet.", style="white"))
+            chat.write(Text("─" * 60, style="dim white"))
+
+        elif cmd in ("/save", "/s"):
+            self.action_save_chat()
+
+        elif cmd in ("/exit", "/quit", "/q"):
+            self.exit()
+
+        elif cmd == "/help":
+            chat.write(HELP_TEXT)
+            chat.write(Text("─" * 60, style="dim white"))
+
+        else:
+            chat.write(Text(f"Unknown command: {cmd}  —  type /help to see available commands.", style="red"))
+
+    # ── Agent loop ─────────────────────────────────────────────────────────────
+
+    async def _run_agent(self) -> None:
+        """Step through the agent until it produces a final text response."""
+        self.sub_title = "Thinking..."
+        while True:
+            response = await asyncio.to_thread(agent.step)
+            self._render_response(response)
+            if len(response) == 1:   # no tool call → Atlas is done
+                break
+        self._reset_subtitle()
+
+    def _render_response(self, response: list) -> None:
+        chat = self.query_one(RichLog)
+
         if len(response) > 1:
+            # ── Tool call ───────────────────────────────────────────────────
             tool_call = response[0].tool_calls[0]
-            id = tool_call.id
             name = tool_call.function.name
             args = tool_call.function.arguments
             if isinstance(args, str):
                 args = json.loads(args)
-                
-            panelText = Text("Tool: ", style="bold blue") + Text(name, style="bold white") + "\n"
-            if args:
-                for arg in args:
-                    if not isinstance(args[arg], str):  panelText += Text(arg + "⤵️\n", style="bold yellow") + Text(str(args[arg]), style="white") + "\n"
-                    else:   panelText += Text(arg + "⤵️\n", style="bold yellow") + Text(args[arg] if len(args[arg]) < 50 else args[arg][:50] + "...", style="white") + "\n"
-            panelText += "\n"
             result = response[1]["content"]
-            panelText += Text("Result⤵️\n", style="bold blue") + Text(result, style="white")
-            toolPanel = Panel(
-                panelText,
-                border_style="dim white",
-                title="🛠️ Executing Tool: ",
-                expand=False,
-            )
-            if not first:
-                console.print(Align("||", align="center"))
-                console.print(Align("||", align="center"))
-            console.print(Align(toolPanel, align="center"))
-            first = False
+
+            self.sub_title = f"Running: {name}..."
+
+            text = Text()
+            text.append("Tool: ", style="bold blue")
+            text.append(name + "\n\n", style="bold white")
+            for k, v in args.items():
+                v_str = str(v)
+                text.append(f"{k} ⤵\n", style="bold yellow")
+                text.append((v_str if len(v_str) <= 80 else v_str[:80] + "…") + "\n", style="white")
+            text.append("\nResult ⤵\n", style="bold blue")
+            text.append(result[:400] + ("…" if len(result) > 400 else ""), style="dim white")
+
+            chat.write(Panel(text, border_style="dim white", expand=False, title="🛠️  Tool Execution"))
+
         else:
-            print()
-            textResponse = response[0].content
-            console.print(Markdown(textResponse))
-            console.print(Markdown("---"))
-            break
+            # ── Text response ───────────────────────────────────────────────
+            content = response[0].content
+            if content:
+                self._write_bubble("Atlas", content, label_style="bold yellow", is_markdown=True)
+
+    # ── Helpers ────────────────────────────────────────────────────────────────
+
+    def _write_bubble(self, label: str, text: str, label_style: str = "bold white", is_markdown: bool = False) -> None:
+        chat = self.query_one(RichLog)
+        chat.write(Text(label, style=label_style))
+        chat.write(Markdown(text) if is_markdown else Text(text, style="white"))
+        chat.write(Text("─" * 60, style="dim white"))
+
+    def _reset_subtitle(self) -> None:
+        self.sub_title = f"v{config.get('version', '1.0')}  ·  {model}"
+
+    # ── Bound actions ──────────────────────────────────────────────────────────
+
+    def action_clear_chat(self)  -> None: self._handle_slash("/clear")
+    def action_show_memory(self) -> None: self._handle_slash("/memory")
+
+    def action_save_chat(self) -> None:
+        chat = self.query_one(RichLog)
+        filename = f"atlas_chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+        lines = ["# Atlas Conversation\n"]
+        for msg in agent.messages:
+            is_dict = isinstance(msg, dict)
+            role    = msg.get("role", "")           if is_dict else getattr(msg, "role", "")
+            content = msg.get("content")            if is_dict else getattr(msg, "content", None)
+            if role == "user" and content:
+                lines.append(f"**You:** {content}\n")
+            elif role == "assistant" and content:
+                lines.append(f"**Atlas:** {content}\n")
+        Path(baseDir / "memory/past_conversations" / filename).write_text("\n".join(lines), encoding="utf-8")
+        chat.write(Text(f"✅  Conversation saved to {filename}", style="bold green"))
+
+# ── Entry point ────────────────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    AtlasTUI().run()
