@@ -154,6 +154,7 @@ Want to change Atlas's personality or behavior? Edit `configuration/AGENT.md` â€
 | `renameFile` | Rename a file |
 | `fileExists` | Check if a file exists |
 | `getFileSize` | Get the size of a file |
+| `searchDirectory` | Searches a file in a directory |
 
 </details>
 
